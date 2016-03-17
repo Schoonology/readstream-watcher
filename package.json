@@ -1,0 +1,15 @@
+{
+  "name": "readstream-watcher",
+  "version": "0.1.0",
+  "description": "We got that fs.ReadStream, we got that fs.Watcher, we got that combination fs.ReadStream and fs.Watcher.",
+  "main": "lib/readstream-watcher.js",
+  "scripts": {
+    "test": "node test/readstream-watcher | faucet"
+  },
+  "author": "Michael Schoonmaker <michael.r.schoonmaker@gmail.com> (https://www.schoonology.com/)",
+  "license": "MIT",
+  "devDependencies": {
+    "faucet": "0.0.1",
+    "tape": "~4.5.1"
+  }
+}
