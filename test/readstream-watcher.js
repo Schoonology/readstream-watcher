@@ -19,6 +19,20 @@ function createTempFile(contents) {
   return file.name;
 }
 
+/**
+ * If `watcher` has a `cleanup` method, that will be called once `tape` has
+ * finished running all tests. Returns the passed-in watcher.
+ */
+function closeLater(watcher) {
+  if (watcher && typeof watcher.cleanup === 'function') {
+    test.onFinish(function () {
+      watcher.cleanup();
+    });
+  }
+
+  return watcher;
+}
+
 test('Module exports a function', function (t) {
   t.equal(typeof createReadStreamWatcher, 'function');
 
@@ -26,13 +40,11 @@ test('Module exports a function', function (t) {
 });
 
 test('Function returns an object', function (t) {
-  var subject = createReadStreamWatcher(createTempFile());
+  var subject = closeLater(createReadStreamWatcher(createTempFile()));
 
   t.equal(typeof subject, 'object');
 
   t.end();
-
-  subject.cleanup();
 });
 
 test('Function requires an argument', function (t) {
@@ -50,30 +62,26 @@ test('Function requires an argument', function (t) {
 
 test('Function returns a ReadStream-compatible object', function (t) {
   var filename = createTempFile();
-  var subject = createReadStreamWatcher(filename);
+  var subject = closeLater(createReadStreamWatcher(filename));
 
   t.equal(subject.path, filename);
   t.equal(typeof subject.read, 'function');
   t.equal(typeof subject.on, 'function');
 
   t.end();
-
-  subject.cleanup();
 });
 
 test('Function returns a Watcher-compatible object', function (t) {
-  var subject = createReadStreamWatcher(createTempFile());
+  var subject = closeLater(createReadStreamWatcher(createTempFile()));
 
   t.equal(typeof subject.close, 'function');
 
   t.end();
-
-  subject.cleanup();
 });
 
 test('ReadableWatcher is readable', function (t) {
   var content = 'test file content';
-  var subject = createReadStreamWatcher(createTempFile(content));
+  var subject = closeLater(createReadStreamWatcher(createTempFile(content)));
 
   getRawBody(subject, {
     encoding: 'utf8'
@@ -82,26 +90,22 @@ test('ReadableWatcher is readable', function (t) {
     t.equal(content, body);
 
     t.end();
-
-    subject.cleanup();
   });
 });
 
 test('ReadableWatcher emits "open" event', function (t) {
-  var subject = createReadStreamWatcher(createTempFile());
+  var subject = closeLater(createReadStreamWatcher(createTempFile()));
 
   subject.on('open', function (fd) {
     t.equal(typeof fd, 'number');
     t.ok(fd > 0);
 
     t.end();
-
-    subject.cleanup();
   });
 });
 
 test('ReadableWatcher emits "error" event when the file does not exist', function (t) {
-  createReadStreamWatcher('bogus-filename')
+  closeLater(createReadStreamWatcher('bogus-filename'))
     .on('error', function (err) {
       t.equal(err.code, 'ENOENT');
       t.end();
@@ -110,7 +114,7 @@ test('ReadableWatcher emits "error" event when the file does not exist', functio
 
 test('ReadableWatcher emits "change" event', function (t) {
   var filename = createTempFile();
-  var subject = createReadStreamWatcher(filename);
+  var subject = closeLater(createReadStreamWatcher(filename));
 
   subject
     .on('change', function (event, changedFile) {
@@ -118,8 +122,6 @@ test('ReadableWatcher emits "change" event', function (t) {
       t.equal(changedFile, filename);
 
       t.end();
-
-      subject.cleanup();
     });
 
   fs.writeFile(filename, 'new test file content', 'utf8');
@@ -137,15 +139,12 @@ test('ReadableWatcher chaining example works', function (t) {
     t.equal(body, firstBody + secondBody);
 
     t.end();
-
-    first.stream.cleanup();
-    second.stream.cleanup();
   });
 
   function first() {
-    first.stream = createReadStreamWatcher(filename);
+    var stream = closeLater(createReadStreamWatcher(filename));
 
-    first.stream
+    stream
       .once('change', second)
       .once('end', function () {
         fs.writeFile(filename, secondBody, 'utf8');
@@ -154,9 +153,9 @@ test('ReadableWatcher chaining example works', function (t) {
   }
 
   function second() {
-    second.stream = createReadStreamWatcher(filename);
+    var stream = closeLater(createReadStreamWatcher(filename));
 
-    second.stream
+    stream
       .pipe(target);
   }
 
