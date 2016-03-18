@@ -20,13 +20,13 @@ function createTempFile(contents) {
 }
 
 /**
- * If `watcher` has a `cleanup` method, that will be called once `tape` has
+ * If `watcher` has a `close` method, that will be called once `tape` has
  * finished running all tests. Returns the passed-in watcher.
  */
 function closeLater(watcher) {
-  if (watcher && typeof watcher.cleanup === 'function') {
+  if (watcher && typeof watcher.close === 'function') {
     test.onFinish(function () {
-      watcher.cleanup();
+      watcher.close();
     });
   }
 
@@ -47,7 +47,7 @@ test('Function returns an object', function (t) {
   t.end();
 });
 
-test('Function requires an argument', function (t) {
+test('Function requires a filename argument', function (t) {
   t.plan(2);
 
   try {
@@ -66,6 +66,7 @@ test('Function returns a ReadStream-compatible object', function (t) {
 
   t.equal(subject.path, filename);
   t.equal(typeof subject.read, 'function');
+  t.equal(typeof subject.pipe, 'function');
   t.equal(typeof subject.on, 'function');
 
   t.end();
@@ -100,6 +101,15 @@ test('ReadableWatcher emits "open" event', function (t) {
     t.equal(typeof fd, 'number');
     t.ok(fd > 0);
 
+    t.end();
+  });
+});
+
+test('ReadableWatcher emits "close" event', function (t) {
+  var subject = closeLater(createReadStreamWatcher(createTempFile()));
+
+  subject.resume();
+  subject.on('close', function () {
     t.end();
   });
 });
@@ -160,4 +170,23 @@ test('ReadableWatcher chaining example works', function (t) {
   }
 
   first();
+});
+
+test('ReadableWatcher encoding option', function (t) {
+  var subject = closeLater(createReadStreamWatcher(createTempFile('test file content'), { encoding: 'utf8' }));
+
+  t.equal(subject.read(), null);
+
+  subject.once('readable', function () {
+    t.equal(subject.read(), 'test file content');
+
+    t.end();
+  });
+});
+
+test('ReadableWatcher persistent option', function (t) {
+  // Don't have to call `close` if it's not persistent.
+  var subject = createReadStreamWatcher(createTempFile(), { persistent: false });
+
+  t.end();
 });
