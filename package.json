@@ -10,6 +10,8 @@
   "license": "MIT",
   "devDependencies": {
     "faucet": "0.0.1",
-    "tape": "~4.5.1"
+    "raw-body": "~2.1.6",
+    "tape": "~4.5.1",
+    "tmp": "0.0.28"
   }
 }
