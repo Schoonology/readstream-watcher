@@ -41,8 +41,8 @@ subset of their API is supported:
 |------------|----------|---------------|
 | `path` | `ReadStream` | The path to the file the stream is reading from. |
 | `pipe(destination, [options])` | `ReadStream` | Writes all the data to the supplied destination. |
+| `read([size])` | `ReadStream` | Returns `size` bytes of available data, returning `null` otherwise. |
 | `close()` | `FSWatcher` | Stop watching for changes on the given `FSWatcher`. No changes are made to the stream. |
-| `read([size])` | `FSWatcher` | Returns `size` bytes of available data, returning `null` otherwise. |
 
 | *Event* | *Origin* | *Description* |
 |---------|----------|---------------|
